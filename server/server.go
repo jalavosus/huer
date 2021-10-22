@@ -37,23 +37,14 @@ func (s *Server) Start() error {
 	r := mux.NewRouter()
 	r.Use(magic.Middleware(s.conf.MagicHeader))
 
-	r.HandleFunc("/",
-		serverutils.SimpleMessageHandler(
-			"You made it!",
-			http.StatusOK),
-	).
+	r.HandleFunc("/", rootHandler("You made it!")).
 		Methods("GET")
 
 	sr := r.PathPrefix("/api").
 		Subrouter().
 		StrictSlash(true)
 
-	sr.HandleFunc("/",
-		serverutils.SimpleMessageHandler(
-			"It's the API's root path, the hell do you want?",
-			http.StatusOK,
-		),
-	).
+	sr.HandleFunc("/", rootHandler("It's the API's root path, the hell do you want?")).
 		Methods("GET")
 
 	makeBasicToggleable(sr, "/rooms")
@@ -70,4 +61,11 @@ func (s *Server) Start() error {
 	log.Println("server listening on " + srv.Addr)
 
 	return srv.ListenAndServe()
+}
+
+func rootHandler(msg string) http.HandlerFunc {
+	return serverutils.SimpleMessageHandler(
+		msg,
+		http.StatusOK,
+	)
 }

@@ -21,11 +21,10 @@ var basicToggleableRoutePaths = []routePath{
 }
 
 func makeBasicToggleable(r *mux.Router, pathPrefix string) {
-	pathPrefix = strings.TrimSuffix(pathPrefix, "/")
-
-	if !strings.HasPrefix(pathPrefix, "/") {
-		pathPrefix = "/" + pathPrefix
-	}
+	pathPrefix = "/" + strings.TrimPrefix(
+		strings.TrimSuffix(pathPrefix, "/"),
+		"/",
+	) // yeah I'm just lazy
 
 	sr := r.PathPrefix(pathPrefix).
 		Subrouter().

@@ -3,6 +3,7 @@ package hue
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -13,6 +14,22 @@ import (
 	"github.com/jalavosus/huer/internal/params"
 	"github.com/jalavosus/huer/utils"
 )
+
+func (h *Huer) AddRoom(room *entities.Room) {
+	if len(room.Lights) == 0 {
+		func() {
+			rmLights, err := room.LightsInfo(h)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			room.Lights = rmLights
+		}()
+
+	}
+
+	h.Rooms = append(h.Rooms, room)
+}
 
 func (h *Huer) GetRoomsRaw() ([]huego.Group, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
@@ -33,10 +50,10 @@ func (h *Huer) LoadRooms() ([]*entities.Room, error) {
 			continue
 		}
 
-		var roomLights []*entities.Entity
+		var roomLights []*entities.Light
 		for _, l := range r.Lights {
 			id, _ := strconv.ParseInt(l, 10, 32)
-			roomLights = append(roomLights, &entities.Entity{ID: int(id)})
+			roomLights = append(roomLights, &entities.Light{ID: int(id)})
 		}
 
 		h.Rooms = append(h.Rooms, &entities.Room{

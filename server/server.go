@@ -35,13 +35,13 @@ func (s *Server) Start() error {
 	r := mux.NewRouter()
 	r.Use(magic.Middleware(s.conf.MagicHeader))
 
-	r.HandleFunc("/", serverutils.SimpleMessage("You made it!"))
+	r.HandleFunc("/", serverutils.SimpleMessageHandler("You made it!", http.StatusOK))
 
 	sr := r.PathPrefix("/api").
 		Subrouter().
 		StrictSlash(true)
 
-	sr.HandleFunc("/", serverutils.SimpleMessage("It's the API's root path, the hell do you want?")).
+	sr.HandleFunc("/", serverutils.SimpleMessageHandler("It's the API's root path, the hell do you want?", http.StatusOK)).
 		Methods("GET")
 
 	makeBasicToggleable(sr, "/rooms")

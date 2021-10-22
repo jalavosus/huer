@@ -6,11 +6,7 @@ import (
 	"net/http"
 )
 
-func SimpleMessage(msg string) http.HandlerFunc {
-	return SimpleMessageWithStatusCode(msg, http.StatusOK)
-}
-
-func SimpleMessageWithStatusCode(msg string, statusCode int) http.HandlerFunc {
+func SimpleMessageHandler(msg string, statusCode int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		SendSimpleResponseWithStatusCode(msg, statusCode, w)
 		return

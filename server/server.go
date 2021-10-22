@@ -12,7 +12,7 @@ import (
 	"github.com/jalavosus/huer/server/serverutils"
 )
 
-const DefaultMagicHeader string = "HUER_MAGIC_FUCKERY"
+const DefaultMagicHeader string = "X-Huer-Magic-Fuckery"
 
 type Server struct {
 	mux  *mux.Router

@@ -8,7 +8,7 @@ import (
 	"github.com/amimof/huego"
 
 	"github.com/jalavosus/huer/entities"
-	"github.com/jalavosus/huer/params"
+	"github.com/jalavosus/huer/internal/params"
 	"github.com/jalavosus/huer/utils"
 )
 

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jalavosus/huer/config"
 	"github.com/jalavosus/huer/hue"
+	"github.com/jalavosus/huer/internal/config"
 )
 
 const (

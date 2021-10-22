@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jalavosus/huer/params"
+	params2 "github.com/jalavosus/huer/internal/params"
 )
 
 type Room struct {
@@ -33,7 +33,7 @@ func (r *Room) LightsInfo(h Huer) ([]*Light, error) {
 	}
 
 	for _, l := range r.Lights {
-		args := params.NewRoomArgs(params.NameParam(l.Name), params.IDParam(l.ID))
+		args := params2.NewRoomArgs(params2.NameParam(l.Name), params2.IDParam(l.ID))
 
 		light, err := r.Light(h, args)
 		if err != nil {
@@ -46,7 +46,7 @@ func (r *Room) LightsInfo(h Huer) ([]*Light, error) {
 	return lights, nil
 }
 
-func (r *Room) Light(h Huer, args *params.RoomArgs) (*Light, error) {
+func (r *Room) Light(h Huer, args *params2.RoomArgs) (*Light, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 

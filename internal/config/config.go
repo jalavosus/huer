@@ -1,7 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -9,6 +11,11 @@ import (
 )
 
 const DefaultContextTimeout = 30 * time.Second
+
+const (
+	hueUriEnv   string = "HUE_URI"
+	hueTokenEnv string = "HUE_TOKEN"
+)
 
 type Config struct {
 	URI   string `json:"uri" yaml:"uri"`
@@ -37,4 +44,31 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	return &conf, nil
+}
+
+func LoadConfigEnv() (c *Config, err error) {
+	c = new(Config)
+
+	c.URI, err = getEnv(hueUriEnv)
+	if err != nil {
+		c = nil
+		return
+	}
+
+	c.Token, err = getEnv(hueTokenEnv)
+	if err != nil {
+		c = nil
+		return
+	}
+
+	return
+}
+
+func getEnv(key string) (string, error) {
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		return "", fmt.Errorf("%s not set in environment", key)
+	}
+
+	return val, nil
 }

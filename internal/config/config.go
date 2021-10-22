@@ -13,13 +13,22 @@ import (
 const DefaultContextTimeout = 30 * time.Second
 
 const (
-	hueUriEnv   string = "HUE_URI"
-	hueTokenEnv string = "HUE_TOKEN"
+	hueUriEnv           string = "HUE_URI"
+	hueTokenEnv         string = "HUE_TOKEN"
+	magicHeaderKeyEnv   string = "MAGIC_HEADER_KEY"
+	magicHeaderValueEnv string = "MAGIC_HEADER_VALUE"
 )
 
 type Config struct {
-	URI   string `json:"uri" yaml:"uri"`
-	Token string `json:"token" yaml:"token"`
+	URI         string             `json:"uri" yaml:"uri"`
+	Token       string             `json:"token" yaml:"token"`
+	MagicHeader *MagicHeaderConfig `json:"magic_header,omitempty" yaml:"magic_header,omitempty"`
+}
+
+type MagicHeaderConfig struct {
+	Key    string `json:"key" yaml:"key"`
+	Value  string `json:"value" yaml:"value"`
+	Header string `json:"header" yaml:"header"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -48,6 +57,7 @@ func LoadConfig(path string) (*Config, error) {
 
 func LoadConfigEnv() (c *Config, err error) {
 	c = new(Config)
+	c.MagicHeader = new(MagicHeaderConfig)
 
 	c.URI, err = getEnv(hueUriEnv)
 	if err != nil {
@@ -56,6 +66,18 @@ func LoadConfigEnv() (c *Config, err error) {
 	}
 
 	c.Token, err = getEnv(hueTokenEnv)
+	if err != nil {
+		c = nil
+		return
+	}
+
+	c.MagicHeader.Key, err = getEnv(magicHeaderKeyEnv)
+	if err != nil {
+		c = nil
+		return
+	}
+
+	c.MagicHeader.Value, err = getEnv(magicHeaderValueEnv)
 	if err != nil {
 		c = nil
 		return

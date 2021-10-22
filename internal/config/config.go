@@ -3,17 +3,16 @@ package config
 import (
 	"io/ioutil"
 	"path/filepath"
+	"time"
 
 	"github.com/goccy/go-yaml"
-
-	"github.com/jalavosus/huer/entities"
 )
 
+const DefaultContextTimeout = 30 * time.Second
+
 type Config struct {
-	URI    string             `json:"uri" yaml:"uri"`
-	Token  string             `json:"token" yaml:"token"`
-	Rooms  []*entities.Room   `json:"rooms" yaml:"rooms"`
-	Lights []*entities.Entity `json:"lights" yaml:"lights"`
+	URI   string `json:"uri" yaml:"uri"`
+	Token string `json:"token" yaml:"token"`
 }
 
 func LoadConfig(path string) (*Config, error) {

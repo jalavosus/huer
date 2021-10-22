@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/jalavosus/huer/entities"
 	"github.com/jalavosus/huer/hue"
 	"github.com/jalavosus/huer/internal/config"
 )
@@ -18,18 +19,24 @@ func main() {
 		log.Panic(err)
 	}
 
-	h, err := hue.NewHuer(conf.URI, conf.Token)
+	h, err := hue.NewHuerWithToken(conf.URI, conf.Token)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	rooms, err := h.LoadRooms()
-	if err != nil {
-		log.Fatal(err)
-	}
+	h.AddRoom(&entities.Room{
+		Entity: &entities.Entity{
+			Name: "Bedroom",
+		},
+	})
 
-	for _, room := range rooms {
+	// rooms, err := h.LoadRooms()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	for _, room := range h.Rooms {
 		fmt.Println("==== " + room.Name + " " + room.UID + " ====")
 
 		lights, err := room.LightsInfo(h)

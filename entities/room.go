@@ -2,13 +2,14 @@ package entities
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
-	"github.com/jalavosus/huer/internal/config"
+	"github.com/pkg/errors"
+
 	"github.com/jalavosus/huer/internal/params"
+	"github.com/jalavosus/huer/utils"
 )
 
 type Room struct {
@@ -22,9 +23,8 @@ func (r *Room) ID(h Huer) int {
 	}
 
 	if h != nil {
-		func() {
-			ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
-			defer cancel()
+		_ = utils.WithTimeoutCtx(func(ctx context.Context) error {
+			var gotId = false
 
 			grps, err := h.Bridge().GetGroupsContext(ctx)
 			if err != nil {
@@ -34,10 +34,17 @@ func (r *Room) ID(h Huer) int {
 			for _, grp := range grps {
 				if strings.ToLower(grp.Name) == strings.ToLower(r.Name) {
 					r.Entity.ID = grp.ID
-					return
+					gotId = true
+					break
 				}
 			}
-		}()
+
+			if !gotId {
+				err = errors.Errorf("couldn't get the room ID for room %[1]s", r.Name)
+			}
+
+			return err
+		})
 	}
 
 	return r.Entity.ID
@@ -74,30 +81,31 @@ func (r *Room) LightsInfo(h Huer) ([]*Light, error) {
 	return lights, nil
 }
 
-func (r *Room) Light(h Huer, args *params.RoomArgs) (*Light, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
-	defer cancel()
+func (r *Room) Light(h Huer, args *params.RoomArgs) (light *Light, err error) {
+	err = utils.WithTimeoutCtx(func(ctx context.Context) error {
+		switch {
+		case args.HasID():
+			l, err := h.Bridge().GetLightContext(ctx, args.ID())
+			if err != nil {
+				return err
+			}
 
-	switch {
-	case args.HasID():
-		light, err := h.Bridge().GetLightContext(ctx, args.ID())
-		if err != nil {
-			return nil, err
-		}
+			light = NewLight(l)
+		case args.HasName():
+			lights, err := h.Bridge().GetLightsContext(ctx)
+			if err != nil {
+				return err
+			}
 
-		return NewLight(light), nil
-	case args.HasName():
-		lights, err := h.Bridge().GetLightsContext(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, l := range lights {
-			if strings.ToLower(l.Name) == strings.ToLower(args.Name()) {
-				return NewLight(&l), nil
+			for _, l := range lights {
+				if strings.ToLower(l.Name) == strings.ToLower(args.Name()) {
+					light = NewLight(&l)
+				}
 			}
 		}
-	}
 
-	return nil, fmt.Errorf("can't get light info")
+		return nil
+	})
+
+	return
 }

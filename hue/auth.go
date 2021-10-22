@@ -13,16 +13,14 @@ import (
 func (h *Huer) tryLogin(userToken string) (authorized bool, authedBridge *huego.Bridge) {
 	authedBridge = h.bridge.Login(userToken)
 
-	tryErr := utils.WithTimeoutCtx(func(ctx context.Context) error {
+	authorized = utils.WithTimeoutCtx(func(ctx context.Context) error {
 		_, err := authedBridge.GetConfigContext(ctx)
 		if err != nil {
 			return err
 		}
 
 		return nil
-	})
-
-	authorized = tryErr == nil
+	}) == nil // gettin' real lazy with it
 
 	return
 }

@@ -3,11 +3,11 @@ package hue
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/amimof/huego"
 
 	"github.com/jalavosus/huer/entities"
+	"github.com/jalavosus/huer/utils"
 
 	"github.com/pkg/errors"
 )
@@ -64,16 +64,16 @@ func newHuer(uri string) (*Huer, error) {
 	h := new(Huer)
 	h.uri = uri
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
+	return h, utils.WithTimeoutCtx(func(ctx context.Context) error {
+		bridge, err := huego.DiscoverContext(ctx)
+		if err != nil {
+			return err
+		}
 
-	bridge, err := huego.DiscoverContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	h.bridge = bridge
+		h.bridge = bridge
 
-	return h, nil
+		return nil
+	})
 }
 
 func (h *Huer) Bridge() *huego.Bridge {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/amimof/huego"
 
-	"github.com/jalavosus/huer/internal/config"
 	"github.com/jalavosus/huer/utils"
 )
 
@@ -37,17 +36,16 @@ func (l Light) IsOff() bool {
 }
 
 func (l *Light) Toggle() error {
-	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
-	defer cancel()
+	return utils.WithTimeoutCtx(func(ctx context.Context) error {
+		switch l.IsOn() {
+		case true:
+			return l.light.OffContext(ctx)
+		case false:
+			return l.light.OnContext(ctx)
+		}
 
-	switch l.IsOn() {
-	case true:
-		return l.light.OffContext(ctx)
-	case false:
-		return l.light.OnContext(ctx)
-	}
-
-	return fmt.Errorf("wat")
+		return fmt.Errorf("wat")
+	})
 }
 
 func (l *Light) ToggleOn() error {
@@ -67,8 +65,7 @@ func (l *Light) ToggleOff() error {
 }
 
 func (l *Light) Rename(newName string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
-	defer cancel()
-
-	return l.light.RenameContext(ctx, newName)
+	return utils.WithTimeoutCtx(func(ctx context.Context) error {
+		return l.light.RenameContext(ctx, newName)
+	})
 }

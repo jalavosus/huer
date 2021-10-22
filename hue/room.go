@@ -10,7 +10,6 @@ import (
 	"github.com/amimof/huego"
 
 	"github.com/jalavosus/huer/entities"
-	"github.com/jalavosus/huer/internal/config"
 	"github.com/jalavosus/huer/internal/params"
 	"github.com/jalavosus/huer/utils"
 )
@@ -31,11 +30,13 @@ func (h *Huer) AddRoom(room *entities.Room) {
 	h.Rooms = append(h.Rooms, room)
 }
 
-func (h *Huer) GetRoomsRaw() ([]huego.Group, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
-	defer cancel()
+func (h *Huer) GetRoomsRaw() (grp []huego.Group, err error) {
+	_ = utils.WithTimeoutCtx(func(ctx context.Context) error {
+		grp, err = h.bridge.GetGroupsContext(ctx)
+		return nil
+	})
 
-	return h.bridge.GetGroupsContext(ctx)
+	return
 }
 
 func (h *Huer) LoadRooms() ([]*entities.Room, error) {
@@ -96,20 +97,19 @@ func (h *Huer) ToggleRoom(args *params.RoomArgs) error {
 		id = args.ID()
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
-	defer cancel()
+	return utils.WithTimeoutCtx(func(ctx context.Context) error {
+		g, err := h.bridge.GetGroupContext(ctx, id)
+		if err != nil {
+			return err
+		}
 
-	g, err := h.bridge.GetGroupContext(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	switch g.State.On {
-	case true:
-		return g.Off()
-	default:
-		return g.On()
-	}
+		switch g.State.On {
+		case true:
+			return g.Off()
+		default:
+			return g.On()
+		}
+	})
 }
 
 func (h *Huer) hasRoom(uid string) (exists bool) {

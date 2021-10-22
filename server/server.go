@@ -1,8 +1,8 @@
 package server
 
 import (
+	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -12,17 +12,19 @@ import (
 	"github.com/jalavosus/huer/server/serverutils"
 )
 
-const DefaultMagicHeader string = "X-Huer-Magic-Fuckery"
+const (
+	DefaultMagicHeader string = "X-Huer-Magic-Fuckery"
+	DefaultPort        string = "44562"
+)
+
+const readWriteTimeout = 15 * time.Second
 
 type Server struct {
-	mux  *mux.Router
 	conf *config.Config
 }
 
 func NewServer(conf *config.Config) *Server {
-	s := &Server{
-		conf: conf,
-	}
+	s := &Server{conf}
 
 	if s.conf.MagicHeader.Header == "" {
 		s.conf.MagicHeader.Header = DefaultMagicHeader
@@ -35,13 +37,23 @@ func (s *Server) Start() error {
 	r := mux.NewRouter()
 	r.Use(magic.Middleware(s.conf.MagicHeader))
 
-	r.HandleFunc("/", serverutils.SimpleMessageHandler("You made it!", http.StatusOK))
+	r.HandleFunc("/",
+		serverutils.SimpleMessageHandler(
+			"You made it!",
+			http.StatusOK),
+	).
+		Methods("GET")
 
 	sr := r.PathPrefix("/api").
 		Subrouter().
 		StrictSlash(true)
 
-	sr.HandleFunc("/", serverutils.SimpleMessageHandler("It's the API's root path, the hell do you want?", http.StatusOK)).
+	sr.HandleFunc("/",
+		serverutils.SimpleMessageHandler(
+			"It's the API's root path, the hell do you want?",
+			http.StatusOK,
+		),
+	).
 		Methods("GET")
 
 	makeBasicToggleable(sr, "/rooms")
@@ -50,36 +62,12 @@ func (s *Server) Start() error {
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "0.0.0.0:44562",
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		Addr:         "0.0.0.0:" + DefaultPort,
+		WriteTimeout: readWriteTimeout,
+		ReadTimeout:  readWriteTimeout,
 	}
+
+	log.Println("server listening on " + srv.Addr)
 
 	return srv.ListenAndServe()
-}
-
-func makeBasicToggleable(r *mux.Router, pathPrefix string) {
-	if !strings.HasPrefix(pathPrefix, "/") {
-		pathPrefix = "/" + pathPrefix
-	}
-
-	if strings.HasSuffix(pathPrefix, "/") {
-		pathPrefix = strings.TrimSuffix(pathPrefix, "/")
-	}
-
-	sr := r.PathPrefix(pathPrefix).
-		Subrouter().
-		StrictSlash(true)
-
-	sr.HandleFunc("/", nil).
-		Methods("GET")
-
-	sr.HandleFunc("/{name}", nil).
-		Methods("GET")
-
-	sr.HandleFunc("/{name}/toggle", nil).
-		Methods("POST")
-
-	sr.HandleFunc("/{name}/toggle/{state}", nil).
-		Methods("POST")
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/jalavosus/huer/internal/config"
@@ -17,8 +16,6 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-
-	fmt.Println(conf)
 
 	s := server.NewServer(conf)
 

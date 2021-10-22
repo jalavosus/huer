@@ -33,14 +33,14 @@ func (l Light) IsOn() bool {
 }
 
 func (l Light) IsOff() bool {
-	return !l.light.State.On
+	return !l.IsOn()
 }
 
 func (l *Light) Toggle() error {
 	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
 	defer cancel()
 
-	switch l.light.State.On {
+	switch l.IsOn() {
 	case true:
 		return l.light.OffContext(ctx)
 	case false:

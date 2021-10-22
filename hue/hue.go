@@ -8,6 +8,7 @@ import (
 	"github.com/amimof/huego"
 
 	"github.com/jalavosus/huer/entities"
+	"github.com/jalavosus/huer/internal/config"
 )
 
 const tokenFilename string = "huetoken"
@@ -76,7 +77,7 @@ func (h *Huer) AllLights() error {
 }
 
 func (h *Huer) ToggleLight(lightId int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
 	defer cancel()
 
 	light, err := h.bridge.GetLightContext(ctx, lightId)
@@ -84,7 +85,7 @@ func (h *Huer) ToggleLight(lightId int) error {
 		return err
 	}
 
-	ctx, cancel = context.WithTimeout(context.Background(), 45*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), config.DefaultContextTimeout)
 	defer cancel()
 
 	_, err = h.bridge.SetLightStateContext(ctx, lightId, huego.State{On: !light.State.On})

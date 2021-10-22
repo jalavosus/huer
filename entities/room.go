@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/jalavosus/huer/internal/config"
 	params2 "github.com/jalavosus/huer/internal/params"
 )
 
@@ -47,7 +47,7 @@ func (r *Room) LightsInfo(h Huer) ([]*Light, error) {
 }
 
 func (r *Room) Light(h Huer, args *params2.RoomArgs) (*Light, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
 	defer cancel()
 
 	switch {

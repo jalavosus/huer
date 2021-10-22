@@ -1,6 +1,7 @@
 package hue
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,12 +9,16 @@ import (
 	"github.com/amimof/huego"
 
 	"github.com/jalavosus/huer/entities"
+	"github.com/jalavosus/huer/internal/config"
 	"github.com/jalavosus/huer/internal/params"
 	"github.com/jalavosus/huer/utils"
 )
 
 func (h *Huer) GetRoomsRaw() ([]huego.Group, error) {
-	return h.bridge.GetGroups()
+	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
+	defer cancel()
+
+	return h.bridge.GetGroupsContext(ctx)
 }
 
 func (h *Huer) LoadRooms() ([]*entities.Room, error) {
@@ -74,7 +79,10 @@ func (h *Huer) ToggleRoom(args *params.RoomArgs) error {
 		id = args.ID()
 	}
 
-	g, err := h.bridge.GetGroup(id)
+	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
+	defer cancel()
+
+	g, err := h.bridge.GetGroupContext(ctx, id)
 	if err != nil {
 		return err
 	}

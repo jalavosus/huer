@@ -3,10 +3,10 @@ package entities
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/amimof/huego"
 
+	"github.com/jalavosus/huer/internal/config"
 	"github.com/jalavosus/huer/utils"
 )
 
@@ -37,7 +37,7 @@ func (l Light) IsOff() bool {
 }
 
 func (l *Light) Toggle() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
 	defer cancel()
 
 	switch l.light.State.On {
@@ -67,7 +67,7 @@ func (l *Light) ToggleOff() error {
 }
 
 func (l *Light) Rename(newName string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultContextTimeout)
 	defer cancel()
 
 	return l.light.RenameContext(ctx, newName)

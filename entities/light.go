@@ -10,38 +10,65 @@ import (
 )
 
 type Light struct {
-	Name       string
-	ID         int
-	UID        string
+	*BaseEntity
 	MacAddress string
+	state      EntityState
 	light      *huego.Light
 }
 
 func NewLight(l *huego.Light) *Light {
-	return &Light{
-		Name:       l.Name,
-		ID:         l.ID,
-		UID:        utils.MakeEntityUID(l.Name, l.ID, l.UniqueID),
+	newLight := &Light{
+		BaseEntity: &BaseEntity{},
 		MacAddress: l.UniqueID,
 		light:      l,
 	}
+
+	newLight.SetName(l.Name)
+	newLight.SetId(l.ID)
+	newLight.SetUid(utils.MakeEntityUID(l.Name, l.ID, l.UniqueID))
+
+	return newLight
+}
+
+func NewLightFromOpts(opts ...BaseEntityOpt) *Light {
+	return &Light{
+		BaseEntity: NewBaseEntityFromOpts(opts...),
+	}
+}
+
+func (l Light) State() EntityState {
+	return l.state
 }
 
 func (l Light) IsOn() bool {
-	return l.light.State.On
+	return l.state == StateOn
 }
 
 func (l Light) IsOff() bool {
-	return !l.IsOn()
+	return l.state == StateOff
+}
+
+func (l Light) checkLightState() EntityState {
+	if l.light.IsOn() {
+		return StateOn
+	}
+
+	return StateOff
 }
 
 func (l *Light) Toggle() error {
 	return utils.WithTimeoutCtx(func(ctx context.Context) error {
 		switch l.IsOn() {
 		case true:
-			return l.light.OffContext(ctx)
+			if err := l.light.OffContext(ctx); err != nil {
+				return err
+			}
+			l.state = StateOff
 		case false:
-			return l.light.OnContext(ctx)
+			if err := l.light.OnContext(ctx); err != nil {
+				return err
+			}
+			l.state = StateOn
 		}
 
 		return fmt.Errorf("wat")
@@ -49,7 +76,7 @@ func (l *Light) Toggle() error {
 }
 
 func (l *Light) ToggleOn() error {
-	if l.IsOn() {
+	if l.checkLightState() == StateOn {
 		return nil
 	}
 
@@ -57,7 +84,7 @@ func (l *Light) ToggleOn() error {
 }
 
 func (l *Light) ToggleOff() error {
-	if l.IsOff() {
+	if l.checkLightState() == StateOff {
 		return nil
 	}
 

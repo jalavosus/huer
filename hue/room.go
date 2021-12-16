@@ -10,21 +10,33 @@ import (
 	"github.com/amimof/huego"
 
 	"github.com/jalavosus/huer/entities"
-	"github.com/jalavosus/huer/internal/params"
 	"github.com/jalavosus/huer/utils"
 )
 
+func (h *Huer) addToEntities(hueEntities ...entities.HueEntity) {
+	for i := range hueEntities {
+		if hueEntities[i].Hue() == nil {
+			hueEntities[i].SetHue(h)
+		}
+	}
+}
+
 func (h *Huer) AddRoom(room *entities.Room) {
+	h.addToEntities(room)
+
 	if len(room.Lights) == 0 {
 		func() {
-			rmLights, err := room.LightsInfo(h)
+			rmLights, err := room.LightsInfo()
 			if err != nil {
 				log.Fatalln(err)
 			}
 
+			for i := range rmLights {
+				rmLights[i].SetHue(h)
+			}
+
 			room.Lights = rmLights
 		}()
-
 	}
 
 	h.Rooms = append(h.Rooms, room)
@@ -54,47 +66,53 @@ func (h *Huer) LoadRooms() ([]*entities.Room, error) {
 		var roomLights []*entities.Light
 		for _, l := range r.Lights {
 			id, _ := strconv.ParseInt(l, 10, 32)
-			roomLights = append(roomLights, &entities.Light{ID: int(id)})
+			roomLights = append(roomLights, entities.NewLightFromOpts(entities.EntityId(int(id))))
 		}
 
-		h.Rooms = append(h.Rooms, &entities.Room{
-			Entity: &entities.Entity{
-				Name: r.Name,
-				ID:   r.ID,
-				UID:  rmUid,
-			},
+		newRoom := &entities.Room{
+			BaseEntity: entities.NewBaseEntityFromOpts(
+				entities.EntityName(r.Name),
+				entities.EntityId(r.ID),
+				entities.EntityUid(rmUid),
+			),
 			Lights: roomLights,
-		})
+		}
+
+		h.addToEntities(newRoom)
+
+		h.Rooms = append(h.Rooms, newRoom)
 	}
 
 	return h.Rooms, nil
 }
 
-func (h *Huer) ToggleRoom(args *params.RoomArgs) error {
+func (h *Huer) ToggleRoom(args ...entities.BaseEntityOpt) error {
 	var id = -1
 
-	if !args.HasName() && !args.HasID() {
+	base := entities.NewBaseEntityFromOpts(args...)
+
+	if base.Id() == -1 && base.Name() == "" {
 		return fmt.Errorf("no room name or room ID provided")
 	}
 
-	if !args.HasID() && args.HasName() {
+	if base.Id() == -1 && base.Name() != "" {
 		grps, err := h.GetRoomsRaw()
 		if err != nil {
 			return err
 		}
 
 		for _, grp := range grps {
-			if strings.ToLower(grp.Name) == strings.ToLower(args.Name()) {
+			if strings.ToLower(grp.Name) == strings.ToLower(base.Name()) {
 				id = grp.ID
 				break
 			}
 		}
 
 		if id == -1 {
-			return fmt.Errorf("no room with name %[1]s found", args.Name())
+			return fmt.Errorf("no room with name %[1]s found", base.Name())
 		}
-	} else if args.HasID() {
-		id = args.ID()
+	} else if base.Id() != -1 {
+		id = base.Id()
 	}
 
 	return utils.WithTimeoutCtx(func(ctx context.Context) error {
@@ -114,7 +132,7 @@ func (h *Huer) ToggleRoom(args *params.RoomArgs) error {
 
 func (h *Huer) hasRoom(uid string) (exists bool) {
 	for _, r := range h.Rooms {
-		if r.UID == uid {
+		if r.Uid() == uid {
 			exists = true
 			break
 		}

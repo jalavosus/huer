@@ -26,9 +26,7 @@ func main() {
 	}
 
 	h.AddRoom(&entities.Room{
-		Entity: &entities.Entity{
-			Name: "Bedroom",
-		},
+		BaseEntity: entities.NewBaseEntityFromOpts(entities.EntityName("Bedroom")),
 	})
 
 	// rooms, err := h.LoadRooms()
@@ -37,15 +35,15 @@ func main() {
 	// }
 
 	for _, room := range h.Rooms {
-		fmt.Println("==== " + room.Name + " " + room.UID + " ====")
+		fmt.Println("==== " + room.Name() + " " + room.Uid() + " ====")
 
-		lights, err := room.LightsInfo(h)
+		lights, err := room.LightsInfo()
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, light := range lights {
-			fmt.Println(light.Name + "\t" + light.UID)
+			fmt.Println(light.Name() + "\t" + light.Uid())
 		}
 
 		fmt.Println()

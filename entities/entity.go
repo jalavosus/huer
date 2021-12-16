@@ -4,10 +4,16 @@ import (
 	"github.com/amimof/huego"
 )
 
-type Entity struct {
-	Name string `json:"name" yaml:"name"`
-	ID   int    `json:"id" yaml:"id"`
-	UID  string `json:"-" yaml:"-"`
+type HueEntity interface {
+	Name() string
+	Id() int
+	Uid() string
+	Hue() *huego.Bridge
+
+	SetName(string)
+	SetId(int)
+	SetUid(string)
+	SetHue(Huer)
 }
 
 type Huer interface {

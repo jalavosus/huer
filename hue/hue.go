@@ -79,3 +79,7 @@ func newHuer(uri string) (*Huer, error) {
 func (h *Huer) Bridge() *huego.Bridge {
 	return h.bridge
 }
+
+func (h Huer) Token() string {
+	return h.userToken
+}

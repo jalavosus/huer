@@ -64,6 +64,14 @@ func (e *BaseEntity) SetHue(huer Huer) {
 	e.hue = huer
 }
 
+func (e BaseEntity) Huer() Huer {
+	return e.hue
+}
+
+func (e *BaseEntity) SetHuer(huer Huer) {
+	e.SetHue(huer)
+}
+
 func (e BaseEntity) marshal(marshal utils.MarshalFunc) ([]byte, error) {
 	raw := make(map[string]interface{})
 

@@ -8,15 +8,85 @@ import (
 	"sync"
 	"time"
 
+	"github.com/amimof/huego"
 	"github.com/pkg/errors"
 
 	"github.com/jalavosus/huer/utils"
 )
 
+type roomGroup struct {
+	h    Huer
+	id   int
+	once sync.Once
+	grp  *huego.Group
+}
+
+func newRoomGroup(h Huer, id int) *roomGroup {
+	g := new(roomGroup)
+	g.h = h
+	g.id = id
+
+	return g
+}
+
+func (g *roomGroup) init() {
+	g.once.Do(func() {
+		grp, err := g.h.Bridge().GetGroup(g.id)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		g.grp = grp
+	})
+}
+
+func (g *roomGroup) Group() *huego.Group {
+	g.init()
+	return g.grp
+}
+
 type Room struct {
 	*BaseEntity `yaml:",inline"`
 	Lights      []*Light `json:"lights" yaml:"lights"`
-	once        sync.Once
+	idOnce      sync.Once
+	grpOnce     sync.Once
+	group       *roomGroup
+}
+
+func NewRoomFromOpts(opts ...BaseEntityOpt) *Room {
+	r := &Room{
+		BaseEntity: NewBaseEntityFromOpts(opts...),
+	}
+
+	if r.Hue() != nil {
+		r.grpOnce.Do(func() {
+			r.group = newRoomGroup(r.Huer(), r.Id())
+			r.group.init()
+		})
+	}
+
+	return r
+}
+
+func (r *Room) grp() *huego.Group {
+	r.grpOnce.Do(func() {
+		g := newRoomGroup(r.Huer(), r.Id())
+		g.init()
+
+		r.group = g
+	})
+
+	return r.group.Group()
+}
+
+func (r *Room) state() *huego.State {
+	return r.grp().State
+}
+
+func (r *Room) RawColors() ([]float32, uint8) {
+	s := r.state()
+
+	return s.Xy, s.Bri
 }
 
 func (r *Room) Id() int {
@@ -38,7 +108,7 @@ func (r *Room) getId(roomId int) (int, error) {
 		idErr   error
 	)
 
-	r.once.Do(func() {
+	r.idOnce.Do(func() {
 		if r.Hue() == nil {
 			idErr = errors.Errorf("no huego.Bridge set for object")
 			return
@@ -78,10 +148,7 @@ func (r *Room) LightsInfo() ([]*Light, error) {
 	var lights []*Light
 
 	if len(r.Lights) == 0 {
-		grp, err := r.Hue().GetGroup(r.Id())
-		if err != nil {
-			return nil, err
-		}
+		grp := r.grp()
 
 		for _, l := range grp.Lights {
 			id, _ := strconv.ParseInt(l, 10, 32)

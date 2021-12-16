@@ -6,6 +6,7 @@ import (
 
 	"github.com/jalavosus/huer/entities"
 	"github.com/jalavosus/huer/hue"
+	"github.com/jalavosus/huer/hue/hueconsts"
 	"github.com/jalavosus/huer/internal/config"
 )
 
@@ -25,14 +26,12 @@ func main() {
 		return
 	}
 
-	h.AddRoom(&entities.Room{
-		BaseEntity: entities.NewBaseEntityFromOpts(entities.EntityName("Bedroom")),
-	})
+	log.Println(h.Token())
 
-	// rooms, err := h.LoadRooms()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	h.AddRoom(entities.NewRoomFromOpts(
+		entities.EntityName("Bedroom"),
+		entities.EntityHuer(h),
+	))
 
 	for _, room := range h.Rooms {
 		fmt.Println("==== " + room.Name() + " " + room.Uid() + " ====")
@@ -42,8 +41,18 @@ func main() {
 			log.Fatal(err)
 		}
 
+		newB := hueconsts.CalculateMaxBrightnessDeltaMul(7, 3)
+
 		for _, light := range lights {
-			fmt.Println(light.Name() + "\t" + light.Uid())
+			fmt.Println(light.Name())
+
+			fmt.Println(light.RawColor())
+
+			if err := light.SetColorAndBrightness(hueconsts.Nightlight, newB); err != nil {
+				log.Fatalln(err)
+			}
+
+			fmt.Println(light.RawColor())
 		}
 
 		fmt.Println()

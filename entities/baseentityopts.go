@@ -39,3 +39,9 @@ func EntityUid(uid string) BaseEntityOpt {
 		e.SetUid(uid)
 	})
 }
+
+func EntityHuer(h Huer) BaseEntityOpt {
+	return newBaseEntityOptFunc(func(e HueEntity) {
+		e.SetHue(h)
+	})
+}

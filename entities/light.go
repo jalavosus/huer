@@ -2,7 +2,7 @@ package entities
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/amimof/huego"
 
@@ -12,7 +12,7 @@ import (
 type Light struct {
 	*BaseEntity
 	MacAddress string
-	state      EntityState
+	lightState EntityState
 	light      *huego.Light
 }
 
@@ -37,15 +37,15 @@ func NewLightFromOpts(opts ...BaseEntityOpt) *Light {
 }
 
 func (l Light) State() EntityState {
-	return l.state
+	return l.lightState
 }
 
 func (l Light) IsOn() bool {
-	return l.state == StateOn
+	return l.checkLightState() == StateOn
 }
 
 func (l Light) IsOff() bool {
-	return l.state == StateOff
+	return l.checkLightState() == StateOff
 }
 
 func (l Light) checkLightState() EntityState {
@@ -57,22 +57,23 @@ func (l Light) checkLightState() EntityState {
 }
 
 func (l *Light) Toggle() error {
-	return utils.WithTimeoutCtx(func(ctx context.Context) error {
-		switch l.IsOn() {
-		case true:
-			if err := l.light.OffContext(ctx); err != nil {
-				return err
-			}
-			l.state = StateOff
-		case false:
-			if err := l.light.OnContext(ctx); err != nil {
-				return err
-			}
-			l.state = StateOn
-		}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
 
-		return fmt.Errorf("wat")
-	})
+	switch l.IsOn() {
+	case true:
+		if err := l.light.OffContext(ctx); err != nil {
+			return err
+		}
+		l.lightState = StateOff
+	case false:
+		if err := l.light.OnContext(ctx); err != nil {
+			return err
+		}
+		l.lightState = StateOn
+	}
+
+	return nil
 }
 
 func (l *Light) ToggleOn() error {
